@@ -57,19 +57,24 @@ protected void onDraw(Canvas canvas) {
     RenderThread.drawCircle(canvas, centerXProperty, centerYProperty, radiusProperty, paintProperty);
 }
 ```
+
 Check the [sample](sample/src/main/java/me/eugeniomarletti/renderthread/sample/TestView.java) for a complete implementation.
 
-## Download
+## Use it in your app
 
 #### Gradle
 
+To use this library, make sure you have the maven repository in your repositories list:
+
 ```Gradle
 repositories {
-    maven {
-        url 'https://dl.bintray.com/takhion/maven/'
-    }
+    maven { url 'https://dl.bintray.com/takhion/maven/' }
 }
+```
 
+Then, add a dependency to the library:
+
+```Gradle
 dependencies {
     compile 'me.eugeniomarletti:renderthread:1.0.0'
 }
