@@ -3,6 +3,7 @@ package me.eugeniomarletti.renderthread;
 import android.animation.Animator;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.drawable.Drawable;
 import android.support.annotation.FloatRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -23,10 +24,13 @@ public final class RenderThread {
     private static void init() {
         RenderThreadDelegate delegate = DELEGATE;
         if (delegate == null || !delegate.isSupported()) {
-            RenderThreadMethods methods = RenderThreadMethods.create(false);
-            DELEGATE = methods != null
-                    ? new RenderThreadDelegateHw(methods)
-                    : new RenderThreadDelegate();
+            RenderThreadMethods methods = RenderThreadMethods.create();
+
+            if (methods != null) {
+                DELEGATE = new RenderThreadDelegateHw(methods);
+            } else {
+                DELEGATE = new RenderThreadDelegate();
+            }
         }
     }
 
@@ -108,6 +112,16 @@ public final class RenderThread {
 
     @NonNull
     public static Animator createFloatAnimator(
+            @NonNull Drawable drawable,
+            @NonNull Canvas canvas,
+            @NonNull CanvasProperty<Float> property,
+            float targetValue
+    ) {
+        return DELEGATE.createFloatAnimator(drawable, canvas, property, targetValue);
+    }
+
+    @NonNull
+    public static Animator createFloatAnimator(
             @NonNull View targetView,
             @NonNull Canvas canvas,
             @NonNull CanvasProperty<Float> property,
@@ -118,12 +132,32 @@ public final class RenderThread {
 
     @NonNull
     public static Animator createPaintAlphaAnimator(
+            @Nullable Drawable drawable,
+            @NonNull Canvas canvas,
+            @NonNull CanvasProperty<Paint> property,
+            @FloatRange(from = 0f, to = 255f) float targetValue
+    ) {
+        return DELEGATE.createPaintAlphaAnimator(drawable, canvas, property, targetValue);
+    }
+
+    @NonNull
+    public static Animator createPaintAlphaAnimator(
             @Nullable View targetView,
             @NonNull Canvas canvas,
             @NonNull CanvasProperty<Paint> property,
             @FloatRange(from = 0f, to = 255f) float targetValue
     ) {
         return DELEGATE.createPaintAlphaAnimator(targetView, canvas, property, targetValue);
+    }
+
+    @NonNull
+    public static Animator createPaintStrokeWidthAnimator(
+            @Nullable Drawable drawable,
+            @NonNull Canvas canvas,
+            @NonNull CanvasProperty<Paint> property,
+            float targetValue
+    ) {
+        return DELEGATE.createPaintStrokeWidthAnimator(drawable, canvas, property, targetValue);
     }
 
     @NonNull

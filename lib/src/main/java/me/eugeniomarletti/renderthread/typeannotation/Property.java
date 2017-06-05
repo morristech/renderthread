@@ -6,6 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 
 @Documented
 @Retention(RetentionPolicy.SOURCE)
-public @interface CanvasProperty {
-    @SuppressWarnings("unused") Class value() default Void.class;
+public @interface Property {
+
+    Class value() default Void.class;
 }

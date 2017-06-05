@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.drawable.Drawable;
 import android.support.annotation.FloatRange;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
@@ -60,22 +61,24 @@ class RenderThreadDelegate {
     }
 
     @Nullable
-    protected HardwareCanvasProperty<Float> createHardwareCanvasProperty(float initialValue) {
+    protected CanvasProperty<Float> createHardwareCanvasProperty(float initialValue) {
         return null;
     }
 
     @Nullable
-    protected HardwareCanvasProperty<Paint> createHardwareCanvasProperty(@NonNull Paint initialValue) {
+    protected CanvasProperty<Paint> createHardwareCanvasProperty(@NonNull Paint initialValue) {
         return null;
     }
 
     @NonNull
-    private SoftwareCanvasProperty<Float> createSoftwareCanvasProperty(float initialValue) {
+    @SuppressWarnings("unchecked") // Casting to the interface to hide the implementation
+    private CanvasProperty<Float> createSoftwareCanvasProperty(float initialValue) {
         return new SoftwareCanvasProperty<>(initialValue);
     }
 
     @NonNull
-    private SoftwareCanvasProperty<Paint> createSoftwareCanvasProperty(@NonNull Paint initialValue) {
+    @SuppressWarnings("unchecked") // Casting to the interface to hide the implementation
+    private CanvasProperty<Paint> createSoftwareCanvasProperty(@NonNull Paint initialValue) {
         return new SoftwareCanvasProperty<>(initialValue);
     }
 
@@ -239,6 +242,20 @@ class RenderThreadDelegate {
     }
 
     @NonNull
+    Animator createFloatAnimator(
+            @NonNull Drawable drawable,
+            @NonNull Canvas canvas,
+            @NonNull CanvasProperty<Float> property,
+            float targetValue
+    ) {
+        if (property.isHardware()) {
+            return createHardwareFloatAnimator(canvas, (HardwareCanvasProperty<Float>) property, targetValue);
+        } else {
+            return createSoftwareFloatAnimator(drawable, (SoftwareCanvasProperty<Float>) property, targetValue);
+        }
+    }
+
+    @NonNull
     Animator createPaintAlphaAnimator(
             @Nullable View targetView,
             @NonNull Canvas canvas,
@@ -249,7 +266,26 @@ class RenderThreadDelegate {
             return createHardwarePaintAlphaAnimator(canvas, (HardwareCanvasProperty<Paint>) property, targetValue);
         } else {
             return createSoftwarePaintAlphaAnimator(
-                    targetView, (SoftwareCanvasProperty<Paint>) property,
+                    targetView,
+                    (SoftwareCanvasProperty<Paint>) property,
+                    Math.round(targetValue)
+            );
+        }
+    }
+
+    @NonNull
+    Animator createPaintAlphaAnimator(
+            @Nullable Drawable drawable,
+            @NonNull Canvas canvas,
+            @NonNull CanvasProperty<Paint> property,
+            @FloatRange(from = 0f, to = 255f) float targetValue
+    ) {
+        if (property.isHardware()) {
+            return createHardwarePaintAlphaAnimator(canvas, (HardwareCanvasProperty<Paint>) property, targetValue);
+        } else {
+            return createSoftwarePaintAlphaAnimator(
+                    drawable,
+                    (SoftwareCanvasProperty<Paint>) property,
                     Math.round(targetValue)
             );
         }
@@ -271,6 +307,28 @@ class RenderThreadDelegate {
         } else {
             return createSoftwarePaintStrokeWidthAnimator(
                     targetView,
+                    (SoftwareCanvasProperty<Paint>) property,
+                    targetValue
+            );
+        }
+    }
+
+    @NonNull
+    Animator createPaintStrokeWidthAnimator(
+            @Nullable Drawable drawable,
+            @NonNull Canvas canvas,
+            @NonNull CanvasProperty<Paint> property,
+            float targetValue
+    ) {
+        if (property.isHardware()) {
+            return createHardwarePaintStrokeWidthAnimator(
+                    canvas,
+                    (HardwareCanvasProperty<Paint>) property,
+                    targetValue
+            );
+        } else {
+            return createSoftwarePaintStrokeWidthAnimator(
+                    drawable,
                     (SoftwareCanvasProperty<Paint>) property,
                     targetValue
             );
@@ -325,6 +383,26 @@ class RenderThreadDelegate {
     }
 
     @NonNull
+    private Animator createSoftwareFloatAnimator(
+            @Nullable final Drawable drawable,
+            @NonNull final SoftwareCanvasProperty<Float> property,
+            float targetValue
+    ) {
+        ValueAnimator animator = ValueAnimator.ofFloat(property.getValue(), targetValue);
+        animator.addUpdateListener(
+                new ValueAnimator.AnimatorUpdateListener() {
+                    @Override
+                    public void onAnimationUpdate(ValueAnimator animation) {
+                        property.setValue((float) animation.getAnimatedValue());
+                        if (drawable != null) {
+                            drawable.invalidateSelf();
+                        }
+                    }
+                });
+        return animator;
+    }
+
+    @NonNull
     private Animator createSoftwarePaintAlphaAnimator(
             @Nullable final View targetView,
             @NonNull final SoftwareCanvasProperty<Paint> property,
@@ -345,6 +423,26 @@ class RenderThreadDelegate {
     }
 
     @NonNull
+    private Animator createSoftwarePaintAlphaAnimator(
+            @Nullable final Drawable drawable,
+            @NonNull final SoftwareCanvasProperty<Paint> property,
+            @IntRange(from = 0, to = 255) int targetValue
+    ) {
+        ValueAnimator animator = ValueAnimator.ofInt(property.getValue().getAlpha(), Math.round(targetValue));
+        animator.addUpdateListener(
+                new ValueAnimator.AnimatorUpdateListener() {
+                    @Override
+                    public void onAnimationUpdate(ValueAnimator animation) {
+                        property.getValue().setAlpha((int) animation.getAnimatedValue());
+                        if (drawable != null) {
+                            drawable.invalidateSelf();
+                        }
+                    }
+                });
+        return animator;
+    }
+
+    @NonNull
     private Animator createSoftwarePaintStrokeWidthAnimator(
             @Nullable final View targetView,
             @NonNull final SoftwareCanvasProperty<Paint> property,
@@ -358,6 +456,26 @@ class RenderThreadDelegate {
                         property.getValue().setStrokeWidth((float) animation.getAnimatedValue());
                         if (targetView != null) {
                             targetView.invalidate();
+                        }
+                    }
+                });
+        return animator;
+    }
+
+    @NonNull
+    private Animator createSoftwarePaintStrokeWidthAnimator(
+            @Nullable final Drawable drawable,
+            @NonNull final SoftwareCanvasProperty<Paint> property,
+            float targetValue
+    ) {
+        ValueAnimator animator = ValueAnimator.ofFloat(property.getValue().getStrokeWidth(), targetValue);
+        animator.addUpdateListener(
+                new ValueAnimator.AnimatorUpdateListener() {
+                    @Override
+                    public void onAnimationUpdate(ValueAnimator animation) {
+                        property.getValue().setStrokeWidth((float) animation.getAnimatedValue());
+                        if (drawable != null) {
+                            drawable.invalidateSelf();
                         }
                     }
                 });

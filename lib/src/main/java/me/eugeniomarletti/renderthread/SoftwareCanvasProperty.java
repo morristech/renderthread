@@ -2,7 +2,7 @@ package me.eugeniomarletti.renderthread;
 
 import android.support.annotation.NonNull;
 
-public final class SoftwareCanvasProperty<T> extends CanvasProperty<T> {
+public final class SoftwareCanvasProperty<T> implements CanvasProperty {
 
     @NonNull
     private T value;

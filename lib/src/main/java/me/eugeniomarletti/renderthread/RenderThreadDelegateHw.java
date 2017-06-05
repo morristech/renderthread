@@ -14,7 +14,7 @@ final class RenderThreadDelegateHw extends RenderThreadDelegate {
 
     @NonNull
     private final RenderThreadMethods renderThread;
-    
+
     RenderThreadDelegateHw(@NonNull RenderThreadMethods renderThread) {
         this.renderThread = renderThread;
     }
@@ -26,7 +26,7 @@ final class RenderThreadDelegateHw extends RenderThreadDelegate {
 
     @NonNull
     @Override
-    protected HardwareCanvasProperty<Float> createHardwareCanvasProperty(float initialValue) {
+    protected CanvasProperty<Float> createHardwareCanvasProperty(float initialValue) {
         return new HardwareCanvasProperty<>(renderThread.createCanvasProperty(initialValue));
     }
 
@@ -56,11 +56,11 @@ final class RenderThreadDelegateHw extends RenderThreadDelegate {
     @Override
     protected void drawCircleHardware(
             @DisplayListCanvas @NonNull Canvas canvas,
-            @NonNull HardwareCanvasProperty<Float> cx,
-            @NonNull HardwareCanvasProperty<Float> cy,
-            @NonNull HardwareCanvasProperty<Float> radius,
-            @NonNull HardwareCanvasProperty<Paint> paint) {
-
+            @NonNull HardwareCanvasProperty cx,
+            @NonNull HardwareCanvasProperty cy,
+            @NonNull HardwareCanvasProperty radius,
+            @NonNull HardwareCanvasProperty paint
+    ) {
         ensureDisplayListCanvas(canvas);
         renderThread.drawCircle(canvas, cx.getProperty(), cy.getProperty(), radius.getProperty(), paint.getProperty());
     }
@@ -68,14 +68,14 @@ final class RenderThreadDelegateHw extends RenderThreadDelegate {
     @Override
     protected void drawRoundRectHardware(
             @DisplayListCanvas @NonNull Canvas canvas,
-            @NonNull HardwareCanvasProperty<Float> left,
-            @NonNull HardwareCanvasProperty<Float> top,
-            @NonNull HardwareCanvasProperty<Float> right,
-            @NonNull HardwareCanvasProperty<Float> bottom,
-            @NonNull HardwareCanvasProperty<Float> rx,
-            @NonNull HardwareCanvasProperty<Float> ry,
-            @NonNull HardwareCanvasProperty<Paint> paint) {
-
+            @NonNull HardwareCanvasProperty left,
+            @NonNull HardwareCanvasProperty top,
+            @NonNull HardwareCanvasProperty right,
+            @NonNull HardwareCanvasProperty bottom,
+            @NonNull HardwareCanvasProperty rx,
+            @NonNull HardwareCanvasProperty ry,
+            @NonNull HardwareCanvasProperty paint
+    ) {
         ensureDisplayListCanvas(canvas);
         renderThread.drawRoundRect(
                 canvas,
@@ -91,8 +91,10 @@ final class RenderThreadDelegateHw extends RenderThreadDelegate {
     @NonNull
     @Override
     protected Animator createHardwareFloatAnimator(
-            @DisplayListCanvas @Nullable Canvas canvas, @NonNull HardwareCanvasProperty<Float> property, float targetValue) {
-
+            @DisplayListCanvas @Nullable Canvas canvas,
+            @NonNull HardwareCanvasProperty property,
+            float targetValue
+    ) {
         Animator animator = renderThread.createFloatRenderNodeAnimator(property.getProperty(), targetValue);
         if (canvas != null) {
             setTarget(animator, canvas);
@@ -104,9 +106,9 @@ final class RenderThreadDelegateHw extends RenderThreadDelegate {
     @Override
     protected Animator createHardwarePaintAlphaAnimator(
             @DisplayListCanvas @Nullable Canvas canvas,
-            @NonNull HardwareCanvasProperty<Paint> property,
-            @FloatRange(from = 0f, to = 255f) float targetValue) {
-
+            @NonNull HardwareCanvasProperty property,
+            @FloatRange(from = 0f, to = 255f) float targetValue
+    ) {
         Animator animator = renderThread.createPaintAlphaRenderNodeAnimator(property.getProperty(), targetValue);
         if (canvas != null) {
             setTarget(animator, canvas);
@@ -117,8 +119,10 @@ final class RenderThreadDelegateHw extends RenderThreadDelegate {
     @NonNull
     @Override
     protected Animator createHardwarePaintStrokeWidthAnimator(
-            @DisplayListCanvas @Nullable Canvas canvas, @NonNull HardwareCanvasProperty<Paint> property, float targetValue) {
-
+            @DisplayListCanvas @Nullable Canvas canvas,
+            @NonNull HardwareCanvasProperty property,
+            float targetValue
+    ) {
         Animator animator = renderThread.createPaintStrokeWidthRenderNodeAnimator(property.getProperty(), targetValue);
         if (canvas != null) {
             setTarget(animator, canvas);

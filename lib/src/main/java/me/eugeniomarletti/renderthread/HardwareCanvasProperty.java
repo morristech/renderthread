@@ -2,20 +2,20 @@ package me.eugeniomarletti.renderthread;
 
 import android.support.annotation.NonNull;
 
-import me.eugeniomarletti.renderthread.typeannotation.CanvasProperty;
+import me.eugeniomarletti.renderthread.typeannotation.Property;
 
-public final class HardwareCanvasProperty<T> extends me.eugeniomarletti.renderthread.CanvasProperty<T> {
+public final class HardwareCanvasProperty<T> implements CanvasProperty<T> {
 
     @NonNull
-    @CanvasProperty
+    @Property
     private final Object property;
 
-    HardwareCanvasProperty(@CanvasProperty @NonNull Object property) {
+    HardwareCanvasProperty(@Property @NonNull Object property) {
         this.property = property;
     }
 
     @NonNull
-    @CanvasProperty
+    @Property
     Object getProperty() {
         return property;
     }

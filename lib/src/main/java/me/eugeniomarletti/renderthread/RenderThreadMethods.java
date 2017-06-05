@@ -1,6 +1,7 @@
 package me.eugeniomarletti.renderthread;
 
 import android.animation.Animator;
+import android.annotation.SuppressLint;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.Build;
@@ -14,13 +15,13 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import me.eugeniomarletti.renderthread.typeannotation.CanvasProperty;
 import me.eugeniomarletti.renderthread.typeannotation.DisplayListCanvas;
+import me.eugeniomarletti.renderthread.typeannotation.Property;
 import me.eugeniomarletti.renderthread.typeannotation.RenderNodeAnimator;
 
 final class RenderThreadMethods {
 
-    private static final int MAX_SUPPORTED_ANDROID_VERSION = 23;
+    private static final int MAX_SUPPORTED_ANDROID_VERSION = 25;
     private static final int MIN_SUPPORTED_ANDROID_VERSION = 21;
 
     @NonNull
@@ -69,11 +70,12 @@ final class RenderThreadMethods {
     }
 
     @Nullable
-    static RenderThreadMethods create(boolean skipAndroidVersionCheck) {
+    static RenderThreadMethods create() {
         int sdk = Build.VERSION.SDK_INT;
-        if (!skipAndroidVersionCheck && !isSupportedAndroidVersion(sdk)) {
+        if (!isSupportedAndroidVersion(sdk)) {
             return null;
         }
+
         try {
             ClassLoader classLoader = RenderThreadMethods.class.getClassLoader();
             Class<?> displayListCanvas = loadDisplayListCanvasClassOrEquivalent(sdk, classLoader);
@@ -100,21 +102,20 @@ final class RenderThreadMethods {
                     renderNodeAnimator_setTarget,
                     renderNodeAnimator_paintField_strokeWidth,
                     renderNodeAnimator_paintField_alpha);
-
         } catch (Exception e) {
-            logW("Error while getting render thread methods.", e);
+            Log.w("RenderThread", "Error while getting render thread methods.", e);
             return null;
         }
     }
 
-    public static boolean isSupportedAndroidVersion(int sdk) {
+    private static boolean isSupportedAndroidVersion(int sdk) {
         return sdk >= MIN_SUPPORTED_ANDROID_VERSION && sdk <= MAX_SUPPORTED_ANDROID_VERSION;
     }
 
     @NonNull
     private static Class<?> loadDisplayListCanvasClassOrEquivalent(int sdk, @NonNull ClassLoader classLoader) throws ClassNotFoundException {
         ClassNotFoundException error;
-        if (sdk >= 22) {
+        if (sdk >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             try {
                 return loadDisplayListCanvasClass(classLoader);
             } catch (ClassNotFoundException e) {
@@ -139,31 +140,35 @@ final class RenderThreadMethods {
     }
 
     @NonNull
+    @SuppressLint("PrivateApi") // This is a hack, but we guard as much as possible against issues
     private static Class<?> loadDisplayListCanvasClass(@NonNull ClassLoader classLoader) throws ClassNotFoundException {
         return classLoader.loadClass("android.view.DisplayListCanvas");
     }
 
     @NonNull
+    @SuppressLint("PrivateApi") // This is a hack, but we guard as much as possible against issues
     private static Class<?> loadGLES20CanvasClass(@NonNull ClassLoader classLoader) throws ClassNotFoundException {
         return classLoader.loadClass("android.view.GLES20Canvas");
     }
 
     @NonNull
+    @SuppressLint("PrivateApi") // This is a hack, but we guard as much as possible against issues
     private static Class<?> loadCanvasPropertyClass(@NonNull ClassLoader classLoader) throws ClassNotFoundException {
         return classLoader.loadClass("android.graphics.CanvasProperty");
     }
 
     @NonNull
+    @SuppressLint("PrivateApi") // This is a hack, but we guard as much as possible against issues
     private static Class<Animator> loadRenderNodeAnimatorClass(@NonNull ClassLoader classLoader) throws ClassNotFoundException {
         return castClass(classLoader.loadClass("android.view.RenderNodeAnimator"), Animator.class);
     }
 
     @NonNull
+    @SuppressWarnings("unchecked") // We have to do an unsafe cast here because we have no type informations
     private static <T> Class<T> castClass(@NonNull Class<?> originalClass, @NonNull Class<T> targetClass) {
         if (!targetClass.isAssignableFrom(originalClass)) {
             throw new ClassCastException(String.format("Cannot cast class %s to %s.", originalClass, targetClass));
         }
-        //noinspection unchecked
         return (Class<T>) originalClass;
     }
 
@@ -246,16 +251,9 @@ final class RenderThreadMethods {
         return constant.getInt(null);
     }
 
-    private static void logW(@NonNull String message, @NonNull Exception e) {
-        if (BuildConfig.DEBUG) {
-            Log.w(RenderThreadMethods.class.getSimpleName(), message, e);
-        }
-    }
-
     @NonNull
-    @CanvasProperty(Float.class)
+    @Property(Float.class)
     public Object createCanvasProperty(float initialValue) {
-        //noinspection TryWithIdenticalCatches
         try {
             return canvasProperty_createFloat.invoke(null, initialValue);
         } catch (IllegalAccessException e) {
@@ -266,9 +264,8 @@ final class RenderThreadMethods {
     }
 
     @NonNull
-    @CanvasProperty(Paint.class)
+    @Property(Paint.class)
     public Object createCanvasProperty(@NonNull Paint initialValue) {
-        //noinspection TryWithIdenticalCatches
         try {
             return canvasProperty_createPaint.invoke(null, initialValue);
         } catch (IllegalAccessException e) {
@@ -284,12 +281,11 @@ final class RenderThreadMethods {
 
     public void drawCircle(
             @DisplayListCanvas @NonNull Canvas canvas,
-            @CanvasProperty(Float.class) @NonNull Object cx,
-            @CanvasProperty(Float.class) @NonNull Object cy,
-            @CanvasProperty(Float.class) @NonNull Object radius,
-            @CanvasProperty(Paint.class) @NonNull Object paint) {
-
-        //noinspection TryWithIdenticalCatches
+            @Property(Float.class) @NonNull Object cx,
+            @Property(Float.class) @NonNull Object cy,
+            @Property(Float.class) @NonNull Object radius,
+            @Property(Paint.class) @NonNull Object paint
+    ) {
         try {
             displayListCanvas_drawCircle.invoke(canvas, cx, cy, radius, paint);
         } catch (IllegalAccessException e) {
@@ -301,15 +297,14 @@ final class RenderThreadMethods {
 
     public void drawRoundRect(
             @DisplayListCanvas @NonNull Canvas canvas,
-            @CanvasProperty(Float.class) @NonNull Object left,
-            @CanvasProperty(Float.class) @NonNull Object top,
-            @CanvasProperty(Float.class) @NonNull Object right,
-            @CanvasProperty(Float.class) @NonNull Object bottom,
-            @CanvasProperty(Float.class) @NonNull Object rx,
-            @CanvasProperty(Float.class) @NonNull Object ry,
-            @CanvasProperty(Paint.class) @NonNull Object paint) {
-
-        //noinspection TryWithIdenticalCatches
+            @Property(Float.class) @NonNull Object left,
+            @Property(Float.class) @NonNull Object top,
+            @Property(Float.class) @NonNull Object right,
+            @Property(Float.class) @NonNull Object bottom,
+            @Property(Float.class) @NonNull Object rx,
+            @Property(Float.class) @NonNull Object ry,
+            @Property(Paint.class) @NonNull Object paint
+    ) {
         try {
             displayListCanvas_drawRoundRect.invoke(canvas, left, top, right, bottom, rx, ry, paint);
         } catch (IllegalAccessException e) {
@@ -321,8 +316,7 @@ final class RenderThreadMethods {
 
     @NonNull
     @RenderNodeAnimator
-    public Animator createFloatRenderNodeAnimator(@CanvasProperty(Float.class) @NonNull Object canvasProperty, float targetValue) {
-        //noinspection TryWithIdenticalCatches
+    public Animator createFloatRenderNodeAnimator(@Property(Float.class) @NonNull Object canvasProperty, float targetValue) {
         try {
             return renderNodeAnimator_float.newInstance(canvasProperty, targetValue);
         } catch (InstantiationException e) {
@@ -337,9 +331,9 @@ final class RenderThreadMethods {
     @NonNull
     @RenderNodeAnimator
     public Animator createPaintAlphaRenderNodeAnimator(
-            @CanvasProperty(Paint.class) @NonNull Object canvasProperty, @FloatRange(from = 0f, to = 255f) float targetValue) {
-
-        //noinspection TryWithIdenticalCatches
+            @Property(Paint.class) @NonNull Object canvasProperty,
+            @FloatRange(from = 0f, to = 255f) float targetValue
+    ) {
         try {
             return renderNodeAnimator_paint.newInstance(canvasProperty, renderNodeAnimator_paintField_alpha, targetValue);
         } catch (InstantiationException e) {
@@ -353,8 +347,7 @@ final class RenderThreadMethods {
 
     @NonNull
     @RenderNodeAnimator
-    public Animator createPaintStrokeWidthRenderNodeAnimator(@CanvasProperty(Paint.class) @NonNull Object canvasProperty, float targetValue) {
-        //noinspection TryWithIdenticalCatches
+    public Animator createPaintStrokeWidthRenderNodeAnimator(@Property(Paint.class) @NonNull Object canvasProperty, float targetValue) {
         try {
             return renderNodeAnimator_paint.newInstance(canvasProperty, renderNodeAnimator_paintField_strokeWidth, targetValue);
         } catch (InstantiationException e) {
@@ -367,7 +360,6 @@ final class RenderThreadMethods {
     }
 
     public void setTarget(@RenderNodeAnimator @NonNull Animator animator, @DisplayListCanvas @NonNull Canvas target) {
-        //noinspection TryWithIdenticalCatches
         try {
             renderNodeAnimator_setTarget.invoke(animator, target);
         } catch (IllegalAccessException e) {

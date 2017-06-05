@@ -1,10 +1,7 @@
 package me.eugeniomarletti.renderthread;
 
-@SuppressWarnings("unused")
-public abstract class CanvasProperty<T> {
+@SuppressWarnings("unused") // The generics is used to ensure type safety across implementers
+public interface CanvasProperty<T> {
 
-    CanvasProperty() {
-    }
-
-    public abstract boolean isHardware();
+    boolean isHardware();
 }
