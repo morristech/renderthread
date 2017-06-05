@@ -205,7 +205,7 @@ class RenderThreadDelegate {
             @NonNull SoftwareCanvasProperty<Float> ry,
             @NonNull SoftwareCanvasProperty<Paint> paint) {
 
-        CanvasUtils.drawRoundRect(
+        CanvasCompat.drawRoundRect(
                 canvas, left.getValue(), top.getValue(), right.getValue(), bottom.getValue(), rx.getValue(), ry.getValue(), paint.getValue());
     }
 
