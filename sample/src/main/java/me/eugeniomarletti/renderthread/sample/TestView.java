@@ -33,10 +33,12 @@ public class TestView extends FrameLayout {
         setWillNotDraw(false);
     }
 
+    @SuppressWarnings("SameParameterValue") // This is a demo...
     public void setUseRenderThread(boolean useRenderThread) {
         this.useRenderThread = useRenderThread;
     }
 
+    @SuppressWarnings("SameParameterValue") // This is a demo....
     public void startAnimation(long durationMillis) {
         animationDurationMillis = durationMillis;
         animateNext = true;
@@ -57,6 +59,7 @@ public class TestView extends FrameLayout {
         }
     }
 
+    @SuppressWarnings("MagicNumber") // Two is not a magic number. Everybody know three's the magic number.
     private void initialiseAnimation(Canvas canvas) {
         float width = getWidth();
         float height = getHeight();
